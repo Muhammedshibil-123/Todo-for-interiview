@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import API from '../api/axios';
 
 export default function TaskForm({ task, onSave, onClose }) {
-  // Pre-fill form if editing an existing task
+  const isEdit = Boolean(task);
+
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -10,85 +11,77 @@ export default function TaskForm({ task, onSave, onClose }) {
     status: 'todo',
     due_date: '',
   });
-  const [error, setError] = useState('');
+  const [error, setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Pre-fill when editing
   useEffect(() => {
     if (task) {
       setForm({
-        title: task.title || '',
+        title:       task.title || '',
         description: task.description || '',
-        priority: task.priority || 'medium',
-        status: task.status || 'todo',
-        due_date: task.due_date || '',
+        priority:    task.priority || 'medium',
+        status:      task.status || 'todo',
+        due_date:    task.due_date || '',
       });
     }
   }, [task]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const onChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
+  const onSubmit = async e => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
-      if (task) {
-        // Edit mode — send PUT request
+      if (isEdit) {
         await API.put(`/tasks/${task.id}/`, form);
       } else {
-        // Create mode — send POST request
         await API.post('/tasks/', form);
       }
       onSave();
     } catch (err) {
       const data = err.response?.data;
-      if (data) {
-        const messages = Object.values(data).flat().join(' ');
-        setError(messages);
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
+      setError(data ? Object.values(data).flat().join(' ') : 'Something went wrong.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    // Modal overlay — clicking outside closes the form
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
+
         <div className="modal-header">
-          <h3>{task ? '✏️ Edit Task' : '➕ New Task'}</h3>
+          <h3>{isEdit ? '✏️ Edit Task' : '✨ New Task'}</h3>
           <button id="close-modal" className="btn-close" onClick={onClose}>✕</button>
         </div>
 
-        {error && <div className="error-banner">{error}</div>}
+        <form className="task-form" onSubmit={onSubmit}>
+          {error && <div className="error-banner">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="task-form">
           <div className="form-group">
             <label htmlFor="task-title">Title *</label>
             <input
               id="task-title"
-              type="text"
               name="title"
-              placeholder="Task title..."
+              type="text"
+              placeholder="What needs to be done?"
               value={form.title}
-              onChange={handleChange}
+              onChange={onChange}
               required
+              autoFocus
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="task-description">Description</label>
+            <label htmlFor="task-desc">Description</label>
             <textarea
-              id="task-description"
+              id="task-desc"
               name="description"
-              placeholder="Describe the task..."
+              placeholder="Add more details about this task…"
               value={form.description}
-              onChange={handleChange}
+              onChange={onChange}
               rows={3}
             />
           </div>
@@ -96,16 +89,15 @@ export default function TaskForm({ task, onSave, onClose }) {
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="task-priority">Priority</label>
-              <select id="task-priority" name="priority" value={form.priority} onChange={handleChange}>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
+              <select id="task-priority" name="priority" value={form.priority} onChange={onChange}>
+                <option value="low">🟢 Low</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="high">🔴 High</option>
               </select>
             </div>
-
             <div className="form-group">
               <label htmlFor="task-status">Status</label>
-              <select id="task-status" name="status" value={form.status} onChange={handleChange}>
+              <select id="task-status" name="status" value={form.status} onChange={onChange}>
                 <option value="todo">To Do</option>
                 <option value="in_progress">In Progress</option>
                 <option value="done">Done</option>
@@ -114,20 +106,24 @@ export default function TaskForm({ task, onSave, onClose }) {
           </div>
 
           <div className="form-group">
-            <label htmlFor="task-due-date">Due Date</label>
+            <label htmlFor="task-due">Due Date</label>
             <input
-              id="task-due-date"
-              type="date"
+              id="task-due"
               name="due_date"
+              type="date"
               value={form.due_date}
-              onChange={handleChange}
+              onChange={onChange}
             />
           </div>
 
           <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" id="save-task-btn" className="btn-primary" disabled={loading}>
-              {loading ? <span className="spinner-sm"></span> : task ? 'Update Task' : 'Create Task'}
+            <button type="button" className="btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button id="save-task-btn" type="submit" className="btn-primary" disabled={loading}>
+              {loading
+                ? <span className="spinner-sm" />
+                : isEdit ? 'Update Task' : 'Create Task'}
             </button>
           </div>
         </form>

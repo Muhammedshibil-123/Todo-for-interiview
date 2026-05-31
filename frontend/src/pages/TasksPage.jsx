@@ -1,47 +1,52 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
 import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
-import { useAuth } from '../context/AuthContext';
 
 export default function TasksPage() {
   const { user, logout } = useAuth();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editTask, setEditTask] = useState(null);
+
+  // ── State ──────────────────────────────────────────
+  const [tasks, setTasks]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [showForm, setShowForm]   = useState(false);
+  const [editTask, setEditTask]   = useState(null);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState('card'); // 'card' or 'table'
+  const [viewMode, setViewMode]   = useState('card');
+  const [filters, setFilters]     = useState({ status: '', priority: '', search: '' });
 
-  // Filters & search
-  const [filters, setFilters] = useState({ status: '', priority: '', search: '' });
-
+  // ── Fetch ──────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
       const params = { page: currentPage };
-      if (filters.status) params.status = filters.status;
-      if (filters.priority) params.priority = filters.priority;
-      if (filters.search) params.search = filters.search;
+      if (filters.status)   params.status   = filters.status;
+      if (filters.priority) params.priority  = filters.priority;
+      if (filters.search)   params.search    = filters.search;
 
       const res = await API.get('/tasks/', { params });
       setTasks(res.data.results);
       setTotalCount(res.data.count);
     } catch (err) {
-      console.error('Failed to fetch tasks:', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   }, [currentPage, filters]);
 
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
-  const handleDelete = async (id) => {
+  // ── Handlers ───────────────────────────────────────
+  const openCreate = () => { setEditTask(null); setShowForm(true); };
+  const openEdit   = task => { setEditTask(task); setShowForm(true); };
+  const closeForm  = () => { setShowForm(false); setEditTask(null); };
+  const afterSave  = () => { closeForm(); fetchTasks(); };
+
+  const handleDelete = async id => {
     if (!window.confirm('Delete this task?')) return;
     await API.delete(`/tasks/${id}/`);
     fetchTasks();
@@ -52,246 +57,285 @@ export default function TasksPage() {
     fetchTasks();
   };
 
-  const handleSave = () => {
-    setShowForm(false);
-    setEditTask(null);
-    fetchTasks();
-  };
-
-  const handleEdit = (task) => {
-    setEditTask(task);
-    setShowForm(true);
-  };
-
-  const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  const setFilter = (key, value) => {
+    setFilters(f => ({ ...f, [key]: value }));
     setCurrentPage(1);
   };
 
-  const totalPages = Math.ceil(totalCount / 6);
+  const clearFilters = () => {
+    setFilters({ status: '', priority: '', search: '' });
+    setCurrentPage(1);
+  };
 
-  const priorityCount = (p) => tasks.filter((t) => t.priority === p).length;
-  const statusCount = (s) => tasks.filter((t) => t.status === s).length;
+  // ── Derived ────────────────────────────────────────
+  const totalPages   = Math.ceil(totalCount / 6);
+  const count = s => tasks.filter(t => t.status === s).length;
+  const pcount = p => tasks.filter(t => t.priority === p).length;
+  const hasFilters = filters.status || filters.priority || filters.search;
 
   return (
     <div className="app-layout">
-      {/* SIDEBAR */}
+
+      {/* ═══ SIDEBAR ═══════════════════════════════════ */}
       <aside className="sidebar">
+
         <div className="sidebar-logo">
-          <span className="logo-icon">✓</span>
+          <div className="logo-icon" style={{ fontSize: '.85rem' }}>✓</div>
           <span>TaskFlow</span>
         </div>
 
         <div className="sidebar-user">
-          <div className="user-avatar">{user?.username?.[0]?.toUpperCase()}</div>
+          <div className="user-avatar">
+            {user?.username?.[0]?.toUpperCase()}
+          </div>
           <div>
             <p className="user-name">{user?.username}</p>
-            <p className="user-email">{user?.email || 'Manage tasks'}</p>
+            <p className="user-role">Task Manager</p>
           </div>
         </div>
 
-        <nav className="sidebar-nav">
-          <p className="nav-label">Overview</p>
-          <div className="stat-card-mini">
-            <span>📋 All Tasks</span>
-            <span className="badge">{totalCount}</span>
+        {/* Status overview */}
+        <div className="nav-section">
+          <p className="nav-label">Status</p>
+          <div className="stat-row">
+            <span className="stat-row-left">📋 All Tasks</span>
+            <span className="stat-num">{totalCount}</span>
           </div>
-          <div className="stat-card-mini todo">
-            <span>🔵 To Do</span>
-            <span className="badge">{statusCount('todo')}</span>
+          <div className="stat-row s-todo">
+            <span className="stat-row-left">🔵 To Do</span>
+            <span className="stat-num">{count('todo')}</span>
           </div>
-          <div className="stat-card-mini progress">
-            <span>🟡 In Progress</span>
-            <span className="badge">{statusCount('in_progress')}</span>
+          <div className="stat-row s-prog">
+            <span className="stat-row-left">🟡 In Progress</span>
+            <span className="stat-num">{count('in_progress')}</span>
           </div>
-          <div className="stat-card-mini done">
-            <span>🟢 Done</span>
-            <span className="badge">{statusCount('done')}</span>
+          <div className="stat-row s-done">
+            <span className="stat-row-left">🟢 Done</span>
+            <span className="stat-num">{count('done')}</span>
           </div>
+        </div>
 
-          <p className="nav-label" style={{ marginTop: '1.5rem' }}>Priority</p>
-          <div className="stat-card-mini high">
-            <span>🔴 High</span>
-            <span className="badge">{priorityCount('high')}</span>
+        {/* Priority overview */}
+        <div className="nav-section">
+          <p className="nav-label">Priority</p>
+          <div className="stat-row s-high">
+            <span className="stat-row-left">🔴 High</span>
+            <span className="stat-num">{pcount('high')}</span>
           </div>
-          <div className="stat-card-mini medium">
-            <span>🟠 Medium</span>
-            <span className="badge">{priorityCount('medium')}</span>
+          <div className="stat-row s-medium">
+            <span className="stat-row-left">🟠 Medium</span>
+            <span className="stat-num">{pcount('medium')}</span>
           </div>
-          <div className="stat-card-mini low">
-            <span>⚪ Low</span>
-            <span className="badge">{priorityCount('low')}</span>
+          <div className="stat-row s-low">
+            <span className="stat-row-left">⚪ Low</span>
+            <span className="stat-num">{pcount('low')}</span>
           </div>
-        </nav>
+        </div>
 
-        <button className="btn-logout" onClick={logout}>
-          🚪 Logout
-        </button>
+        <div className="sidebar-footer">
+          <button className="btn-logout" onClick={logout}>
+            🚪 Logout
+          </button>
+        </div>
       </aside>
 
-      {/* MAIN CONTENT */}
+      {/* ═══ MAIN ═══════════════════════════════════════ */}
       <main className="main-content">
-        {/* Header */}
-        <div className="content-header">
-          <div>
-            <h2 className="page-title">My Tasks</h2>
-            <p className="page-subtitle">{totalCount} total tasks</p>
+
+        {/* Top bar */}
+        <div className="top-bar">
+          <div className="top-bar-left">
+            <h2>My Tasks</h2>
+            <p>{totalCount} task{totalCount !== 1 ? 's' : ''} in total</p>
           </div>
-          <div className="header-actions">
+          <div className="top-bar-right">
             <div className="view-toggle">
               <button
                 id="view-card"
                 className={viewMode === 'card' ? 'active' : ''}
                 onClick={() => setViewMode('card')}
-                title="Card View"
+                title="Card view"
               >⊞</button>
               <button
                 id="view-table"
                 className={viewMode === 'table' ? 'active' : ''}
                 onClick={() => setViewMode('table')}
-                title="Table View"
+                title="Table view"
               >☰</button>
             </div>
-            <button
-              id="add-task-btn"
-              className="btn-primary"
-              onClick={() => { setEditTask(null); setShowForm(true); }}
-            >
+            <button id="add-task-btn" className="btn-primary" onClick={openCreate}>
               + New Task
             </button>
           </div>
         </div>
 
-        {/* Search & Filters */}
+        {/* Toolbar */}
         <div className="toolbar">
           <SearchBar
             value={filters.search}
-            onChange={(v) => handleFilterChange('search', v)}
+            onChange={v => setFilter('search', v)}
           />
-          <div className="filters">
-            <select
-              id="filter-status"
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-            >
-              <option value="">All Status</option>
-              <option value="todo">To Do</option>
-              <option value="in_progress">In Progress</option>
-              <option value="done">Done</option>
-            </select>
-            <select
-              id="filter-priority"
-              value={filters.priority}
-              onChange={(e) => handleFilterChange('priority', e.target.value)}
-            >
-              <option value="">All Priority</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-            {(filters.status || filters.priority || filters.search) && (
-              <button
-                className="btn-clear"
-                onClick={() => { setFilters({ status: '', priority: '', search: '' }); setCurrentPage(1); }}
-              >
-                ✕ Clear
-              </button>
-            )}
-          </div>
+          <select
+            id="filter-status"
+            className="filter-select"
+            value={filters.status}
+            onChange={e => setFilter('status', e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+          <select
+            id="filter-priority"
+            className="filter-select"
+            value={filters.priority}
+            onChange={e => setFilter('priority', e.target.value)}
+          >
+            <option value="">All Priority</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          {hasFilters && (
+            <button className="btn-clear-filter" onClick={clearFilters}>
+              ✕ Clear
+            </button>
+          )}
         </div>
 
-        {/* Task List */}
-        {loading ? (
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Loading tasks...</p>
-          </div>
-        ) : tasks.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📭</div>
-            <h3>No tasks found</h3>
-            <p>Create your first task to get started!</p>
-            <button className="btn-primary" onClick={() => setShowForm(true)}>+ Add Task</button>
-          </div>
-        ) : viewMode === 'card' ? (
-          <div className="task-grid">
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onStatusChange={handleStatusChange}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="table-wrapper">
-            <table className="task-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Priority</th>
-                  <th>Status</th>
-                  <th>Due Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tasks.map((task) => (
-                  <tr key={task.id}>
-                    <td>
-                      <div className="table-title">{task.title}</div>
-                      <div className="table-desc">{task.description}</div>
-                    </td>
-                    <td>
-                      <span className={`badge-priority priority-${task.priority}`}>
-                        {task.priority}
-                      </span>
-                    </td>
-                    <td>
-                      <select
-                        className={`status-select status-${task.status}`}
-                        value={task.status}
-                        onChange={(e) => handleStatusChange(task, e.target.value)}
-                      >
-                        <option value="todo">To Do</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="done">Done</option>
-                      </select>
-                    </td>
-                    <td className="table-date">
-                      {task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <button className="btn-icon edit" onClick={() => handleEdit(task)}>✏️</button>
-                        <button className="btn-icon delete" onClick={() => handleDelete(task.id)}>🗑️</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {/* Content */}
+        <div className="content-area">
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        )}
+          {/* Stats bar */}
+          <div className="stats-bar">
+            <div className="stat-card">
+              <div className="stat-icon purple">📋</div>
+              <div>
+                <div className="stat-card-num">{totalCount}</div>
+                <div className="stat-card-lbl">Total Tasks</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon blue">🔵</div>
+              <div>
+                <div className="stat-card-num">{count('todo')}</div>
+                <div className="stat-card-lbl">To Do</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon amber">🟡</div>
+              <div>
+                <div className="stat-card-num">{count('in_progress')}</div>
+                <div className="stat-card-lbl">In Progress</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon green">✅</div>
+              <div>
+                <div className="stat-card-num">{count('done')}</div>
+                <div className="stat-card-lbl">Completed</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tasks list */}
+          {loading ? (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Loading tasks…</p>
+            </div>
+          ) : tasks.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">📭</div>
+              <h3>{hasFilters ? 'No tasks match your filters' : 'No tasks yet'}</h3>
+              <p>{hasFilters ? 'Try clearing the filters' : 'Create your first task to get started!'}</p>
+              {!hasFilters && (
+                <button className="btn-primary" onClick={openCreate}>+ Create Task</button>
+              )}
+            </div>
+          ) : viewMode === 'card' ? (
+            <div className="task-grid">
+              {tasks.map(task => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onEdit={openEdit}
+                  onDelete={handleDelete}
+                  onStatusChange={handleStatusChange}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table className="task-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tasks.map(task => (
+                    <tr key={task.id}>
+                      <td>
+                        <div className="tbl-title">{task.title}</div>
+                        {task.description && <div className="tbl-desc">{task.description}</div>}
+                      </td>
+                      <td>
+                        <span className={`pill p-${task.priority}`}>
+                          {task.priority}
+                        </span>
+                      </td>
+                      <td>
+                        <select
+                          className={`status-sel ${task.status}`}
+                          value={task.status}
+                          onChange={e => handleStatusChange(task, e.target.value)}
+                        >
+                          <option value="todo">To Do</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="done">Done</option>
+                        </select>
+                      </td>
+                      <td className="tbl-date">
+                        {task.due_date
+                          ? new Date(task.due_date).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+                          : '—'}
+                      </td>
+                      <td>
+                        <div className="tbl-actions">
+                          <button className="btn-icon edit"   onClick={() => openEdit(task)}      title="Edit">✏️</button>
+                          <button className="btn-icon delete" onClick={() => handleDelete(task.id)} title="Delete">🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </div>
       </main>
 
-      {/* Task Form Modal */}
+      {/* Modal */}
       {showForm && (
         <TaskForm
           task={editTask}
-          onSave={handleSave}
-          onClose={() => { setShowForm(false); setEditTask(null); }}
+          onSave={afterSave}
+          onClose={closeForm}
         />
       )}
     </div>

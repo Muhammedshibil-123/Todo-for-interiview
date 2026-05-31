@@ -1,10 +1,6 @@
-// Pagination component — shows page numbers and prev/next buttons
 export default function Pagination({ currentPage, totalPages, onPageChange }) {
-  // Generate page numbers to display
-  const pages = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pages.push(i);
-  }
+  // Build array of page numbers
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
     <div className="pagination">
@@ -13,19 +9,15 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         className="page-btn"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-      >
-        ← Prev
-      </button>
+      >← Prev</button>
 
-      {pages.map((page) => (
+      {pages.map(p => (
         <button
-          key={page}
-          id={`page-${page}`}
-          className={`page-btn ${currentPage === page ? 'page-active' : ''}`}
-          onClick={() => onPageChange(page)}
-        >
-          {page}
-        </button>
+          key={p}
+          id={`page-${p}`}
+          className={`page-btn ${p === currentPage ? 'active' : ''}`}
+          onClick={() => onPageChange(p)}
+        >{p}</button>
       ))}
 
       <button
@@ -33,9 +25,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         className="page-btn"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-      >
-        Next →
-      </button>
+      >Next →</button>
     </div>
   );
 }

@@ -1,21 +1,15 @@
-// SearchBar — debounced search input
 import { useState, useEffect } from 'react';
 
+// Debounced search — waits 400ms after the user stops typing
 export default function SearchBar({ value, onChange }) {
   const [local, setLocal] = useState(value);
 
-  // Debounce: wait 400ms after user stops typing before calling onChange
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onChange(local);
-    }, 400);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => onChange(local), 400);
+    return () => clearTimeout(t);
   }, [local]);
 
-  // Sync if parent resets
-  useEffect(() => {
-    setLocal(value);
-  }, [value]);
+  useEffect(() => { setLocal(value); }, [value]);
 
   return (
     <div className="search-wrapper">
@@ -24,9 +18,9 @@ export default function SearchBar({ value, onChange }) {
         id="search-input"
         type="text"
         className="search-input"
-        placeholder="Search tasks by title..."
+        placeholder="Search by title…"
         value={local}
-        onChange={(e) => setLocal(e.target.value)}
+        onChange={e => setLocal(e.target.value)}
       />
       {local && (
         <button className="search-clear" onClick={() => { setLocal(''); onChange(''); }}>
