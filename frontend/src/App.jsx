@@ -4,23 +4,24 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import TasksPage from './pages/TasksPage';
 
-// Protected route — redirects to login if not authenticated
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="full-center"><div className="spinner"></div></div>;
-  return user ? children : <Navigate to="/login" />;
+  if (loading) return (
+    <div className="full-center">
+      <div className="spinner"></div>
+    </div>
+  );
+  return user ? children : <Navigate to="/login" replace />;
 }
 
 function AppRoutes() {
   const { user } = useAuth();
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
-      <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
+      <Route path="/login"    element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/register" element={user ? <Navigate to="/" replace /> : <RegisterPage />} />
       <Route path="/" element={
-        <PrivateRoute>
-          <TasksPage />
-        </PrivateRoute>
+        <PrivateRoute><TasksPage /></PrivateRoute>
       } />
     </Routes>
   );
