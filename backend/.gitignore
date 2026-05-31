@@ -1,15 +1,28 @@
-# Virtual Environment
-env/
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
 
-# Environment Variables
+# Virtual environment
+env/
+venv/
+.venv/
+
+# Django
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media/
+
+# Environment variables — NEVER commit this!
 .env
 
-# Python Cache
-__pycache__/
-*.pyc
-
-# Database
-db.sqlite3
-
-# VS Code
+# IDE
 .vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

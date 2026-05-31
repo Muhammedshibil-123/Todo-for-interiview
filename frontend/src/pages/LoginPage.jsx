@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../redux/authSlice';
+import { GoogleLogin } from '@react-oauth/google';
+import API from '../api/axios';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [form, setForm]     = useState({ username: '', password: '' });
   const [error, setError]   = useState('');
@@ -16,7 +19,9 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      await login(form.username, form.password);
+      const res = await API.post('/auth/login/', form);
+      const user = { username: form.username }; 
+      dispatch(setCredentials({ user, accessToken: res.data.access }));
       navigate('/');
     } catch {
       setError('Invalid username or password. Please try again.');
@@ -25,55 +30,90 @@ export default function LoginPage() {
     }
   };
 
+  const onGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await API.post('/auth/google/', { token: credentialResponse.credential });
+      dispatch(setCredentials({ user: res.data.user, accessToken: res.data.access }));
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Google login failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-
-        {/* Logo */}
-        <div className="auth-logo">
-          <div className="logo-icon">✓</div>
-          <h1>TaskFlow</h1>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Decorative background blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
+      
+      <div className="w-full max-w-md bg-surface/80 backdrop-blur-xl border border-border p-8 rounded-2xl shadow-2xl z-10">
+        
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 bg-primary text-white flex items-center justify-center rounded-xl text-2xl font-bold mb-4 shadow-lg shadow-primary/30">
+            ✓
+          </div>
+          <h1 className="text-2xl font-bold text-textMain tracking-tight">TaskFlow</h1>
+          <p className="text-textMuted text-sm mt-1">Sign in to your workspace</p>
         </div>
-        <p className="auth-subtitle">Sign in to your workspace</p>
 
-        {error && <div className="error-banner">{error}</div>}
+        {error && (
+          <div className="bg-danger/10 border border-danger/30 text-danger text-sm p-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
 
-        <form className="auth-form" onSubmit={onSubmit}>
-          <div className="form-group">
-            <label htmlFor="login-username">Username</label>
-            <input
-              id="login-username"
-              name="username"
-              type="text"
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-textMuted mb-1">Username</label>
+            <input name="username" type="text"
               placeholder="Enter username"
-              value={form.username}
-              onChange={onChange}
-              required
-              autoFocus
-            />
+              className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-textMain focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-textMuted/50"
+              value={form.username} onChange={onChange} required autoFocus />
           </div>
-
-          <div className="form-group">
-            <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              name="password"
-              type="password"
+          
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-textMuted">Password</label>
+              <Link to="/forgot-password" className="text-xs text-primary hover:text-primaryHover transition-colors">Forgot Password?</Link>
+            </div>
+            <input name="password" type="password"
               placeholder="Enter password"
-              value={form.password}
-              onChange={onChange}
-              required
-            />
+              className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-textMain focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-textMuted/50"
+              value={form.password} onChange={onChange} required />
           </div>
 
-          <button id="login-submit" type="submit" className="btn-primary" disabled={loading}>
-            {loading ? <span className="spinner-sm" /> : 'Sign In →'}
+          <button type="submit" disabled={loading}
+            className="w-full bg-primary hover:bg-primaryHover text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center mt-2 disabled:opacity-70">
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : 'Sign In →'}
           </button>
         </form>
 
-        <p className="auth-switch">
-          No account? <Link to="/register">Create one free</Link>
+        <div className="flex items-center my-6 gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-textMuted text-xs font-medium tracking-wider uppercase">or continue with</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={onGoogleSuccess}
+            onError={() => setError('Google Login Failed')}
+            useOneTap
+            shape="rectangular"
+            theme="filled_black"
+          />
+        </div>
+        
+        <p className="text-center text-textMuted text-sm mt-8">
+          No account? <Link to="/register" className="text-primary hover:text-primaryHover font-medium">Create one free</Link>
         </p>
+
       </div>
     </div>
   );
