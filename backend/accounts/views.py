@@ -30,7 +30,7 @@ class CustomTokenjwtView(TokenObtainPairView):
             response.set_cookie(
                 key=settings.SIMPLE_JWT.get("AUTH_COOKIE", "refresh_token"),
                 value=refresh_token,
-                max_age=settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME").total_seconds(),
+                max_age=int(settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME").total_seconds()),
                 secure=settings.SIMPLE_JWT.get("AUTH_COOKIE_SECURE", False),
                 httponly=settings.SIMPLE_JWT.get("AUTH_COOKIE_HTTP_ONLY", True),
                 samesite=settings.SIMPLE_JWT.get("AUTH_COOKIE_SAMESITE", "Lax"),
@@ -59,7 +59,7 @@ class CustomTokenRefreshView(TokenRefreshView):
                     response.set_cookie(
                         key=settings.SIMPLE_JWT.get("AUTH_COOKIE", "refresh_token"),
                         value=new_refresh_token,
-                        max_age=settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME").total_seconds(),
+                        max_age=int(settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME").total_seconds()),
                         secure=settings.SIMPLE_JWT.get("AUTH_COOKIE_SECURE", False),
                         httponly=settings.SIMPLE_JWT.get("AUTH_COOKIE_HTTP_ONLY", True),
                         samesite=settings.SIMPLE_JWT.get("AUTH_COOKIE_SAMESITE", "Lax"),
@@ -221,13 +221,17 @@ class GoogleLoginView(APIView):
         if not google_token:
             return Response({"error": "No token provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        user_info_req = requests.get(f"https://www.googleapis.com/oauth2/v3/userinfo?access_token={google_token}")
+        # The token from @react-oauth/google is an ID token, not an access token.
+        user_info_req = requests.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={google_token}")
         
         if not user_info_req.ok:
             return Response({"error": "Invalid Google Token"}, status=status.HTTP_400_BAD_REQUEST)
 
         idinfo = user_info_req.json()
-        email = idinfo["email"]
+        email = idinfo.get("email")
+        if not email:
+            return Response({"error": "Email not provided by Google"}, status=status.HTTP_400_BAD_REQUEST)
+
         first_name = idinfo.get("given_name", "")
         last_name = idinfo.get("family_name", "")
 
@@ -267,7 +271,7 @@ class GoogleLoginView(APIView):
         response.set_cookie(
             key=settings.SIMPLE_JWT.get("AUTH_COOKIE", "refresh_token"),
             value=str(refresh),
-            max_age=settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME").total_seconds(),
+            max_age=int(settings.SIMPLE_JWT.get("REFRESH_TOKEN_LIFETIME").total_seconds()),
             secure=settings.SIMPLE_JWT.get("AUTH_COOKIE_SECURE", False),
             httponly=settings.SIMPLE_JWT.get("AUTH_COOKIE_HTTP_ONLY", True),
             samesite=settings.SIMPLE_JWT.get("AUTH_COOKIE_SAMESITE", "Lax"),

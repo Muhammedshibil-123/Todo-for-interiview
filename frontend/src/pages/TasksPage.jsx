@@ -155,8 +155,6 @@ export default function TasksPage() {
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-8 relative">
           
-          {/* Decorative Background Blob */}
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -z-10 pointer-events-none" />
 
           {/* Filters Toolbar */}
           <div className="flex flex-col lg:flex-row gap-4 mb-8">

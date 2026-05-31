@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import API from '../api/axios';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', otp: '', new_password: '' });
+  const location = useLocation();
+  const [form, setForm] = useState({ email: location.state?.email || '', otp: '', new_password: '' });
   const [status, setStatus] = useState({ loading: false, error: '', success: '' });
 
   const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -26,11 +27,9 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       
-      <div className="w-full max-w-md bg-surface/80 backdrop-blur-xl border border-border p-8 rounded-2xl shadow-2xl z-10">
+      <div className="w-full max-w-md bg-surface border border-border p-8 rounded-2xl shadow-2xl z-10">
         
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 bg-primary text-white flex items-center justify-center rounded-xl text-2xl font-bold mb-4 shadow-lg shadow-primary/30">

@@ -8,7 +8,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import TasksPage from './pages/TasksPage';
 import { setCredentials } from './redux/authSlice';
 import API from './api/axios';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Require Auth Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -20,21 +20,31 @@ const ProtectedRoute = ({ children }) => {
 // Auto-Login Check Wrapper
 const AppInitializer = ({ children }) => {
   const dispatch = useDispatch();
+  const [isChecking, setIsChecking] = useState(true);
   
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await API.post('/auth/token/refresh/');
-        dispatch(setCredentials({ user: res.data.user, accessToken: res.data.access }));
+        if (document.cookie.includes('refresh_token')) {
+          const res = await API.post('/auth/token/refresh/');
+          dispatch(setCredentials({ user: res.data.user, accessToken: res.data.access }));
+        }
       } catch (err) {
         // Not logged in, that's fine
+      } finally {
+        setIsChecking(false);
       }
     };
-    if (!document.cookie.includes('refresh_token')) {
-      // If we know there's no cookie, skip refresh (optional optimization)
-    }
     checkAuth();
   }, [dispatch]);
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-surfaceHover border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return children;
 };
