@@ -17,6 +17,12 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const GuestRoute = ({ children }) => {
+  const { accessToken } = useSelector(state => state.auth);
+  if (accessToken) return <Navigate to="/" replace />;
+  return children;
+};
+
 
 const AppInitializer = ({ children }) => {
   const dispatch = useDispatch();
@@ -25,10 +31,8 @@ const AppInitializer = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        if (document.cookie.includes('refresh_token')) {
-          const res = await API.post('/auth/token/refresh/');
-          dispatch(setCredentials({ user: res.data.user, accessToken: res.data.access }));
-        }
+        const res = await API.post('/auth/token/refresh/');
+        dispatch(setCredentials({ user: res.data.user, accessToken: res.data.access }));
       } catch (err) {
         
       } finally {
@@ -58,8 +62,8 @@ export default function App() {
         <AppInitializer>
           <div className="bg-background min-h-screen text-textMain font-sans selection:bg-primary/30">
             <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+              <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               

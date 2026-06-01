@@ -22,7 +22,7 @@ export default function LoginPage() {
       const res = await API.post('/auth/login/', form);
       const user = { username: form.username }; 
       dispatch(setCredentials({ user, accessToken: res.data.access }));
-      navigate('/');
+      navigate('/', { replace: true });
     } catch {
       setError('Invalid username or password. Please try again.');
     } finally {
@@ -36,7 +36,7 @@ export default function LoginPage() {
     try {
       const res = await API.post('/auth/google/', { token: credentialResponse.credential });
       dispatch(setCredentials({ user: res.data.user, accessToken: res.data.access }));
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Google login failed.');
     } finally {
