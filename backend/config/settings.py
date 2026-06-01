@@ -66,7 +66,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ── Database (PostgreSQL) ──────────────────────────────────────
-# All credentials are read from .env — never hardcoded here
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -95,15 +95,12 @@ USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ── CORS ───────────────────────────────────────────────────────
-# Allow the React frontend to talk to this backend
 CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:5173'
 ).split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-# ── Django REST Framework ──────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -114,7 +111,7 @@ REST_FRAMEWORK = {
     # Filtering, search, and pagination are handled manually in each APIView
 }
 
-# ── JWT ────────────────────────────────────────────────────────
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME':  timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -127,7 +124,7 @@ SIMPLE_JWT = {
     'AUTH_COOKIE_SAMESITE': 'Lax',
 }
 
-# ── Email Settings ─────────────────────────────────────────────
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = os.getenv('EMAIL_PORT', 587)
@@ -135,6 +132,6 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 
-# ── AI Services ────────────────────────────────────────────────
+
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
