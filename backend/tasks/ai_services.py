@@ -1,7 +1,4 @@
-"""
-AI Services module for TaskFlow.
-Handles Gemini embedding generation for semantic search via pgvector.
-"""
+
 
 import requests
 import logging
@@ -12,10 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class GeminiEmbeddingService:
-    """
-    Generates vector embeddings using Google's Gemini embedding model.
-    Used to convert task text into 768-dimensional vectors for pgvector similarity search.
-    """
 
     EMBEDDING_MODEL = "gemini-embedding-001"
     EMBEDDING_DIMENSIONS = 3072
@@ -27,16 +20,12 @@ class GeminiEmbeddingService:
             logger.warning("[EMBEDDING] GEMINI_API_KEY not configured. Embeddings will be skipped.")
 
     def _build_text(self, task) -> str:
-        """
-        Serializes a Task model instance into a rich text string for embedding.
-        This is the 'document' that pgvector will search against.
-        """
         parts = [f"Task: {task.title}."]
 
         if task.description:
             parts.append(f"Description: {task.description}.")
 
-        # Map internal values to human-readable labels
+
         priority_map = {'low': 'Low', 'medium': 'Medium', 'high': 'High'}
         status_map = {'todo': 'To Do', 'in_progress': 'In Progress', 'done': 'Done'}
 
@@ -49,10 +38,6 @@ class GeminiEmbeddingService:
         return " ".join(parts)
 
     def generate_embedding(self, text: str):
-        """
-        Calls the Gemini API to generate a vector embedding for the given text.
-        Returns a list of floats (768 dimensions) or None if it fails.
-        """
         if not self.api_key:
             return None
 
@@ -95,28 +80,17 @@ class GeminiEmbeddingService:
             return None
 
     def generate_task_embedding(self, task):
-        """
-        Convenience method: builds the text from a Task instance and generates its embedding.
-        """
         text = self._build_text(task)
         return self.generate_embedding(text)
 
 
 class GroqService:
-    """
-    Uses the Groq LLM API to rewrite conversational search queries into
-    clean, keyword-focused queries for better semantic search accuracy.
-    """
     def __init__(self):
         self.api_key = getattr(settings, 'GROQ_API_KEY', None)
         if not self.api_key:
             logger.warning("[GROQ] GROQ_API_KEY not configured. Query rewriting will be skipped.")
 
     def rewrite_query(self, query: str) -> str:
-        """
-        Takes a raw conversational query and returns a cleaned keyword string.
-        Falls back to the original query if Groq fails.
-        """
         if not self.api_key:
             return query
 
@@ -145,7 +119,7 @@ class GroqService:
             rewritten = chat_completion.choices[0].message.content.strip()
             logger.info(f"[GROQ] Rewrote query: '{query}' -> '{rewritten}'")
             
-            # If the LLM returned nothing or something weird, use original
+
             if not rewritten or len(rewritten) > 100:
                 return query
                 
@@ -155,6 +129,6 @@ class GroqService:
             logger.error(f"[GROQ] Query rewrite failed: {e}")
             return query
 
-# Singleton instances for reuse across the app
+
 embedding_service = GeminiEmbeddingService()
 groq_service = GroqService()

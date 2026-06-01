@@ -4,13 +4,6 @@ from pgvector.django import VectorField
 
 
 class Task(models.Model):
-    """
-    Task model representing a single task in the system.
-    Each task belongs to a user and has priority, status, and due date.
-    Includes a vector embedding field for AI-powered semantic search.
-    """
-
-    # Priority choices
     PRIORITY_LOW = 'low'
     PRIORITY_MEDIUM = 'medium'
     PRIORITY_HIGH = 'high'
@@ -20,7 +13,6 @@ class Task(models.Model):
         (PRIORITY_HIGH, 'High'),
     ]
 
-    # Status choices
     STATUS_TODO = 'todo'
     STATUS_IN_PROGRESS = 'in_progress'
     STATUS_DONE = 'done'
@@ -30,7 +22,6 @@ class Task(models.Model):
         (STATUS_DONE, 'Done'),
     ]
 
-    # Fields
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
@@ -40,7 +31,6 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # AI Semantic Search — pgvector embedding (3072 dimensions from Gemini)
     embedding = VectorField(dimensions=3072, null=True, blank=True)
 
     class Meta:
@@ -50,10 +40,6 @@ class Task(models.Model):
         return f"{self.title} ({self.status})"
 
     def get_embedding_text(self):
-        """
-        Serializes all task fields into a single descriptive string
-        that will be converted into a vector embedding for semantic search.
-        """
         priority_map = {'low': 'Low', 'medium': 'Medium', 'high': 'High'}
         status_map = {'todo': 'To Do', 'in_progress': 'In Progress', 'done': 'Done'}
 

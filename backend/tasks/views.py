@@ -13,10 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 def _update_task_embedding(task):
-    """
-    Helper: Generate and save embedding for a task.
-    Non-blocking — if it fails, the task is still saved without an embedding.
-    """
     try:
         embedding = embedding_service.generate_task_embedding(task)
         if embedding:
@@ -27,36 +23,23 @@ def _update_task_embedding(task):
 
 
 class TaskListCreateView(APIView):
-    """
-    GET  /api/tasks/  — List all tasks for the logged-in user.
-                        Supports filtering by status & priority,
-                        search by title, and pagination.
-
-    POST /api/tasks/  — Create a new task.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        # Start with only the logged-in user's tasks
         tasks = Task.objects.filter(user=request.user)
 
-        # --- Filter by status (e.g. ?status=todo) ---
         status_param = request.query_params.get('status')
         if status_param:
             tasks = tasks.filter(status=status_param)
 
-        # --- Filter by priority (e.g. ?priority=high) ---
         priority_param = request.query_params.get('priority')
         if priority_param:
             tasks = tasks.filter(priority=priority_param)
 
-        # --- Search by title (e.g. ?search=login) ---
         search_param = request.query_params.get('search')
         if search_param:
             tasks = tasks.filter(title__icontains=search_param)
 
-        # --- Pagination ---
-        # Default: 6 tasks per page, e.g. ?page=2
         page_size = 6
         total_count = tasks.count()
 
@@ -71,7 +54,6 @@ class TaskListCreateView(APIView):
 
         serializer = TaskSerializer(paginated_tasks, many=True)
 
-        # Return response in the same format DRF pagination uses
         return Response({
             'count': total_count,
             'page': page,
@@ -82,10 +64,7 @@ class TaskListCreateView(APIView):
     def post(self, request):
         serializer = TaskSerializer(data=request.data)
         if serializer.is_valid():
-            # Automatically assign the logged-in user
             task = serializer.save(user=request.user)
-
-            # Generate and save embedding for the new task
             _update_task_embedding(task)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -93,19 +72,9 @@ class TaskListCreateView(APIView):
 
 
 class TaskDetailView(APIView):
-    """
-    GET    /api/tasks/{id}/  — Retrieve a single task.
-    PUT    /api/tasks/{id}/  — Fully update a task.
-    PATCH  /api/tasks/{id}/  — Partially update a task (e.g. just status).
-    DELETE /api/tasks/{id}/  — Delete a task.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, pk, user):
-        """
-        Helper: fetch the task only if it belongs to the current user.
-        Returns 404 if not found or not owned by this user.
-        """
         return get_object_or_404(Task, pk=pk, user=user)
 
     def get(self, request, pk):
@@ -118,21 +87,16 @@ class TaskDetailView(APIView):
         serializer = TaskSerializer(task, data=request.data)
         if serializer.is_valid():
             updated_task = serializer.save()
-
-            # Re-generate embedding when task is fully updated
             _update_task_embedding(updated_task)
 
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, pk):
-        # partial=True allows updating only the fields that are sent
         task = self.get_object(pk, request.user)
         serializer = TaskSerializer(task, data=request.data, partial=True)
         if serializer.is_valid():
             updated_task = serializer.save()
-
-            # Re-generate embedding when task is updated
             _update_task_embedding(updated_task)
 
             return Response(serializer.data)
@@ -145,16 +109,6 @@ class TaskDetailView(APIView):
 
 
 class AIChatView(APIView):
-    """
-    POST /api/tasks/ai-chat/
-    Body: { "message": "What high-priority tasks are due this week?" }
-
-    AI-powered chat assistant using RAG (Retrieval-Augmented Generation).
-    1. Embeds the user's question via Gemini
-    2. Finds the top 5 most relevant tasks via pgvector cosine similarity
-    3. Sends those tasks + the question to Groq LLM
-    4. Returns the LLM's natural language response
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -165,7 +119,6 @@ class AIChatView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Step 1: Embed the user's question
         query_embedding = embedding_service.generate_embedding(message)
         if query_embedding is None:
             return Response(
@@ -173,7 +126,6 @@ class AIChatView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE
             )
 
-        # Step 2: Find top 5 most relevant tasks via pgvector
         relevant_tasks = list(
             Task.objects
             .filter(user=request.user, embedding__isnull=False)
@@ -181,7 +133,6 @@ class AIChatView(APIView):
             .order_by('distance')[:5]
         )
 
-        # Step 3: Build context string from the retrieved tasks
         if relevant_tasks:
             tasks_context = "\n".join([
                 f"- Title: {t.title} | Description: {t.description or 'None'} | "
@@ -192,7 +143,6 @@ class AIChatView(APIView):
         else:
             tasks_context = "No tasks found."
 
-        # Step 4: Send to Groq LLM with the context
         try:
             from groq import Groq
             client = Groq(api_key=settings.GROQ_API_KEY)

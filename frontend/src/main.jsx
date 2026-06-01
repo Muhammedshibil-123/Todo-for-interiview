@@ -6,7 +6,7 @@ import { store } from './redux/store';
 import './index.css';
 import App from './App.jsx';
 
-// Normally this should be in a .env file on the frontend, e.g. import.meta.env.VITE_GOOGLE_CLIENT_ID
+
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE";
 
 createRoot(document.getElementById('root')).render(

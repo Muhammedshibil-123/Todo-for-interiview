@@ -28,7 +28,7 @@ export default function RegisterPage() {
     setError('');
     try {
       await API.post('/auth/register/', form);
-      // Success - move to OTP step
+      
       setStep(2);
     } catch (err) {
       const data = err.response?.data;
@@ -44,7 +44,7 @@ export default function RegisterPage() {
     setError('');
     try {
       await API.post('/auth/verify-registration/', { email: form.email, otp });
-      // Now auto login
+   
       const res = await API.post('/auth/login/', { username: form.username, password: form.password });
       dispatch(setCredentials({ user: { username: form.username }, accessToken: res.data.access }));
       navigate('/');

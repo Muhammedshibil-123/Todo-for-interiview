@@ -10,14 +10,14 @@ import { setCredentials } from './redux/authSlice';
 import API from './api/axios';
 import { useEffect, useState } from 'react';
 
-// Require Auth Wrapper
+
 const ProtectedRoute = ({ children }) => {
   const { accessToken } = useSelector(state => state.auth);
   if (!accessToken) return <Navigate to="/login" replace />;
   return children;
 };
 
-// Auto-Login Check Wrapper
+
 const AppInitializer = ({ children }) => {
   const dispatch = useDispatch();
   const [isChecking, setIsChecking] = useState(true);
@@ -30,7 +30,7 @@ const AppInitializer = ({ children }) => {
           dispatch(setCredentials({ user: res.data.user, accessToken: res.data.access }));
         }
       } catch (err) {
-        // Not logged in, that's fine
+        
       } finally {
         setIsChecking(false);
       }

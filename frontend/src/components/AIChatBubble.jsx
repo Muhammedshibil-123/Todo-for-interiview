@@ -22,17 +22,17 @@ export default function AIChatBubble() {
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Auto-scroll to bottom when messages change
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
 
-  // Focus input when chat opens
+
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  // Persist messages
+
   useEffect(() => { saveMessages(messages); }, [messages]);
 
   const sendMessage = async () => {
@@ -70,10 +70,10 @@ export default function AIChatBubble() {
 
   return (
     <>
-      {/* Chat Window */}
+
       {open && (
         <div className="fixed bottom-24 right-6 w-[420px] max-h-[600px] bg-[#1a1a2e] border border-purple-500/20 rounded-2xl shadow-2xl shadow-purple-900/30 flex flex-col z-50 overflow-hidden animate-in">
-          {/* Header */}
+
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-gradient-to-r from-purple-900/40 to-[#1a1a2e]">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
@@ -107,7 +107,7 @@ export default function AIChatBubble() {
             </div>
           </div>
 
-          {/* Messages */}
+
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-[340px] max-h-[420px] scrollbar-thin">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center py-10 opacity-60">
@@ -148,7 +148,7 @@ export default function AIChatBubble() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
+
           <div className="px-4 py-3 border-t border-white/5 bg-[#151525]">
             <div className="flex items-center gap-2">
               <input
@@ -175,7 +175,7 @@ export default function AIChatBubble() {
         </div>
       )}
 
-      {/* Floating Action Button */}
+
       <button
         onClick={() => setOpen(o => !o)}
         className={`fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center z-50 transition-all duration-300 shadow-2xl ${

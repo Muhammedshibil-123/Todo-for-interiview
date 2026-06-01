@@ -26,7 +26,6 @@ class CustomTokenjwtView(TokenObtainPairView):
         if response.status_code == 200:
             refresh_token = response.data.get("refresh")
             
-            # Set HttpOnly cookie for refresh token
             response.set_cookie(
                 key=settings.SIMPLE_JWT.get("AUTH_COOKIE", "refresh_token"),
                 value=refresh_token,
@@ -36,7 +35,6 @@ class CustomTokenjwtView(TokenObtainPairView):
                 samesite=settings.SIMPLE_JWT.get("AUTH_COOKIE_SAMESITE", "Lax"),
             )
 
-            # Remove refresh token from JSON response body
             del response.data["refresh"]
 
         return response
@@ -65,7 +63,6 @@ class CustomTokenRefreshView(TokenRefreshView):
                         samesite=settings.SIMPLE_JWT.get("AUTH_COOKIE_SAMESITE", "Lax"),
                     )
 
-                # Append user data to refresh response
                 access_token_str = response.data.get("access")
                 access_token = AccessToken(access_token_str)
                 user = User.objects.get(id=access_token["user_id"])
@@ -115,7 +112,6 @@ class RegisterView(generics.CreateAPIView):
                 fail_silently=False,
             )
         except Exception as e:
-            # Optionally handle email failure (e.g. log it), but don't crash registration
             print(f"Failed to send email: {e}")
 
 
@@ -221,7 +217,6 @@ class GoogleLoginView(APIView):
         if not google_token:
             return Response({"error": "No token provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # The token from @react-oauth/google is an ID token, not an access token.
         user_info_req = requests.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={google_token}")
         
         if not user_info_req.ok:
@@ -241,7 +236,6 @@ class GoogleLoginView(APIView):
                 return Response({"error": "Your account is inactive."}, status=status.HTTP_403_FORBIDDEN)
         except User.DoesNotExist:
             username = email.split('@')[0]
-            # Ensure unique username
             base_username = username
             counter = 1
             while User.objects.filter(username=username).exists():

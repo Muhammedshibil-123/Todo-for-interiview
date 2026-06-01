@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 
 class RegisterSerializer(serializers.ModelSerializer):
-    """Serializer for user registration."""
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True, label='Confirm Password')
 
@@ -19,7 +18,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
-        user.is_active = False # Require OTP verification
+        user.is_active = False
         user.save()
         return user
 
@@ -30,7 +29,6 @@ class VerifyRegistrationSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for returning user profile info."""
     class Meta:
         model = User
         fields = ['id', 'username', 'email']

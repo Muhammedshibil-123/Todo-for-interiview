@@ -12,7 +12,7 @@ export default function TasksPage() {
   const { user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
 
-  // ── State ──────────────────────────────────────────
+
   const [tasks, setTasks]         = useState([]);
   const [loading, setLoading]     = useState(true);
   const [showForm, setShowForm]   = useState(false);
@@ -23,7 +23,6 @@ export default function TasksPage() {
   const [filters, setFilters]     = useState({ status: '', priority: '', search: '' });
 
 
-  // ── Fetch ──────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
@@ -44,7 +43,7 @@ export default function TasksPage() {
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
-  // ── Handlers ───────────────────────────────────────
+ 
   const openCreate = () => { setEditTask(null); setShowForm(true); };
   const openEdit   = task => { setEditTask(task); setShowForm(true); };
   const closeForm  = () => { setShowForm(false); setEditTask(null); };
@@ -71,7 +70,7 @@ export default function TasksPage() {
     setCurrentPage(1);
   };
 
-  // ── Derived ────────────────────────────────────────
+ 
   const totalPages   = Math.ceil(totalCount / 6);
   const count = s => tasks.filter(t => t.status === s).length;
   const pcount = p => tasks.filter(t => t.priority === p).length;
@@ -80,10 +79,10 @@ export default function TasksPage() {
   return (
     <div className="min-h-screen bg-background text-textMain flex flex-col overflow-hidden">
       
-      {/* ═══ TOP NAVIGATION BAR ═══════════════════════════════════ */}
+     
       <nav className="w-full bg-surface border-b border-border flex items-center justify-between px-6 py-3 shrink-0 z-20">
         
-        {/* Logo */}
+       
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold shadow-lg shadow-primary/20">
             ✓
@@ -91,7 +90,7 @@ export default function TasksPage() {
           <span className="text-xl font-bold tracking-tight">TaskFlow</span>
         </div>
 
-        {/* User Profile & Logout */}
+        
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
@@ -117,10 +116,10 @@ export default function TasksPage() {
         </div>
       </nav>
 
-      {/* ═══ MAIN CONTENT ═══════════════════════════════════════ */}
+      
       <main className="flex-1 flex flex-col overflow-hidden max-w-7xl mx-auto w-full">
         
-        {/* Top Header (Page Title & Actions) */}
+        
         <header className="flex flex-col sm:flex-row sm:items-center justify-between px-8 py-6 z-10 gap-4 shrink-0">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">My Tasks</h2>
@@ -154,11 +153,11 @@ export default function TasksPage() {
           </div>
         </header>
 
-        {/* Scrollable Content */}
+        
         <div className="flex-1 overflow-y-auto p-8 relative">
           
 
-          {/* Filters Toolbar */}
+          
           <div className="flex flex-col lg:flex-row gap-4 mb-8">
             <div className="flex-1">
               <SearchBar value={filters.search} onChange={v => setFilter('search', v)} />
@@ -199,7 +198,7 @@ export default function TasksPage() {
             </div>
           </div>
 
-          {/* Quick Stats Cards */}
+          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
              <div className="bg-surface/50 border border-border p-4 rounded-2xl flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-primary/20 text-primary flex items-center justify-center text-xl">📋</div>
@@ -232,7 +231,7 @@ export default function TasksPage() {
           </div>
 
 
-          {/* Tasks list */}
+          
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-textMuted">
               <div className="w-10 h-10 border-4 border-surfaceHover border-t-primary rounded-full animate-spin mb-4" />
@@ -326,7 +325,7 @@ export default function TasksPage() {
             </div>
           )}
 
-          {/* Pagination */}
+       
           {totalPages > 1 && (
             <div className="mt-8">
               <Pagination
@@ -339,7 +338,6 @@ export default function TasksPage() {
         </div>
       </main>
 
-      {/* Modal */}
       {showForm && (
         <TaskForm
           task={editTask}
@@ -348,7 +346,6 @@ export default function TasksPage() {
         />
       )}
 
-      {/* AI Chat Bubble */}
       <AIChatBubble />
     </div>
   );
