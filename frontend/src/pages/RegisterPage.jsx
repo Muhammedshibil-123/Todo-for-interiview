@@ -42,14 +42,22 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
     try {
       await API.post('/auth/verify-registration/', { email: form.email, otp });
+    } catch (err) {
+      setError(err.response?.data?.error || 'Verification failed. Invalid OTP.');
+      setLoading(false);
+      return;
+    }
 
+    try {
       const res = await API.post('/auth/login/', { username: form.username, password: form.password });
       dispatch(setCredentials({ user: { username: form.username }, accessToken: res.data.access }));
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Verification failed. Invalid OTP.');
+      console.error("Login Error:", err.response?.data);
+      setError(err.response?.data?.detail || err.response?.data?.error || 'OTP Verified! But automatic login failed. Please go to the Login page manually.');
     } finally {
       setLoading(false);
     }
