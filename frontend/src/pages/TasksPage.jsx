@@ -6,6 +6,7 @@ import TaskCard from '../components/TaskCard';
 import TaskForm from '../components/TaskForm';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
+import AIChatBubble from '../components/AIChatBubble';
 
 export default function TasksPage() {
   const { user } = useSelector(state => state.auth);
@@ -20,6 +21,7 @@ export default function TasksPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode]   = useState('card');
   const [filters, setFilters]     = useState({ status: '', priority: '', search: '' });
+
 
   // ── Fetch ──────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
@@ -229,6 +231,7 @@ export default function TasksPage() {
              </div>
           </div>
 
+
           {/* Tasks list */}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-textMuted">
@@ -344,6 +347,9 @@ export default function TasksPage() {
           onClose={closeForm}
         />
       )}
+
+      {/* AI Chat Bubble */}
+      <AIChatBubble />
     </div>
   );
 }
