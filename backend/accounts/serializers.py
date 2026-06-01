@@ -1,14 +1,17 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from .models import UserProfile
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True, label='Confirm Password')
 
+    mobile_number = serializers.CharField(write_only=True, required=True, max_length=15)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'password2']
+        fields = ['id', 'username', 'email', 'mobile_number','password', 'password2']
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
@@ -17,9 +20,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password2')
+        mobile_number = validated_data.pop('mobile_number')
         user = User.objects.create_user(**validated_data)
         user.is_active = False
         user.save()
+
+        UserProfile.objects.create(user=user, mobile_number=mobile_number)
         return user
 
 

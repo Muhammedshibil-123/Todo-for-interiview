@@ -132,7 +132,7 @@ class VerifyRegistrationOTPView(APIView):
 
                 otp_profile = OTP.objects.get(user=user)
 
-                if otp_profile.otp_code == otp and otp_profile.otp_code is not None:
+                if otp_profile.matches(otp):
                     user.is_active = True
                     user.save()
                     otp_profile.clear_otp()
@@ -196,7 +196,7 @@ class ResetPasswordView(APIView):
                 user = User.objects.get(email=email)
                 otp_profile = OTP.objects.get(user=user)
 
-                if otp_profile.otp_code == otp and otp_profile.otp_code is not None:
+                if otp_profile.matches(otp):
                     user.set_password(password)
                     user.save()
                     otp_profile.clear_otp()

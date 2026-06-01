@@ -8,11 +8,11 @@ import API from '../api/axios';
 export default function RegisterPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   const [step, setStep] = useState(1); // 1 = Register, 2 = Verify OTP
-  const [form, setForm] = useState({ username: '', email: '', password: '', password2: '' });
+  const [form, setForm] = useState({ username: '', email: '', mobile_number: '', password: '', password2: '' });
   const [otp, setOtp] = useState('');
-  
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +28,7 @@ export default function RegisterPage() {
     setError('');
     try {
       await API.post('/auth/register/', form);
-      
+
       setStep(2);
     } catch (err) {
       const data = err.response?.data;
@@ -44,7 +44,7 @@ export default function RegisterPage() {
     setError('');
     try {
       await API.post('/auth/verify-registration/', { email: form.email, otp });
-   
+
       const res = await API.post('/auth/login/', { username: form.username, password: form.password });
       dispatch(setCredentials({ user: { username: form.username }, accessToken: res.data.access }));
       navigate('/');
@@ -72,7 +72,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
       <div className="w-full max-w-md bg-surface border border-border p-8 rounded-2xl shadow-2xl z-10">
-        
+
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 bg-primary text-white flex items-center justify-center rounded-xl text-2xl font-bold mb-4 shadow-lg shadow-primary/30">
             ✓
@@ -99,13 +99,21 @@ export default function RegisterPage() {
                   className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-textMain focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-textMuted/50"
                   value={form.username} onChange={onChange} required autoFocus />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-textMuted mb-1">Email</label>
                 <input name="email" type="email"
                   placeholder="you@example.com"
                   className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-textMain focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-textMuted/50"
                   value={form.email} onChange={onChange} required />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-textMuted mb-1">Mobile Number</label>
+                <input name="mobile_number" type="tel"
+                  placeholder="Enter your mobile number"
+                  className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-textMain focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-textMuted/50"
+                  value={form.mobile_number} onChange={onChange} required />
               </div>
 
               <div className="flex gap-4">
@@ -148,7 +156,7 @@ export default function RegisterPage() {
                 theme="filled_black"
               />
             </div>
-            
+
             <p className="text-center text-textMuted text-sm mt-8">
               Already have an account? <Link to="/login" className="text-primary hover:text-primaryHover font-medium">Sign in</Link>
             </p>
@@ -173,7 +181,7 @@ export default function RegisterPage() {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : 'Verify & Login →'}
             </button>
-            
+
             <button type="button" onClick={() => setStep(1)} className="w-full text-center text-textMuted text-sm mt-4 hover:text-white transition-colors">
               Cancel
             </button>
